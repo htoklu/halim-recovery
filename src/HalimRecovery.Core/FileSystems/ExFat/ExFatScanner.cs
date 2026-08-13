@@ -24,6 +24,7 @@ public sealed class ExFatScanner
     public int BytesPerCluster => BytesPerSector * SectorsPerCluster;
 
     private uint[]? _fat;
+    private byte[]? _allocationBitmap;
 
     public ExFatScanner(RawDiskReader reader)
     {
@@ -60,6 +61,7 @@ public sealed class ExFatScanner
     {
         var started = System.Diagnostics.Stopwatch.StartNew();
         LoadFat();
+        LoadAllocationBitmap();
         var results = new List<RecoverableFile>();
         var visited = new HashSet<long>();
         WalkDirectory(RootDirCluster, "", chainValid: true, maxClusters: long.MaxValue,
@@ -96,6 +98,48 @@ public sealed class ExFatScanner
     /// is unreachable from the live tree, so all entries are recoverable — Windows does not
     /// rewrite child entries as "deleted" when it deletes a whole directory tree.
     /// </param>
+    /// <summary>
+    /// Reads the allocation bitmap (root entry type 0x81). It is the authoritative cluster
+    /// allocation state on exFAT — FAT entries of deleted files are often left stale.
+    /// </summary>
+    private void LoadAllocationBitmap()
+    {
+        try
+        {
+            var data = new byte[BytesPerCluster];
+            if (_reader.ReadAt(ClusterToOffset(RootDirCluster), data, 0, data.Length) < data.Length) return;
+            for (int off = 0; off + 32 <= data.Length; off += 32)
+            {
+                if (data[off] == 0x00) break;
+                if (data[off] != 0x81) continue;
+                long first = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(off + 20, 4));
+                long len = BinaryPrimitives.ReadInt64LittleEndian(data.AsSpan(off + 24, 8));
+                if (first < 2 || len <= 0 || len > 128L * 1024 * 1024) return;
+                _allocationBitmap = new byte[len];
+                _reader.ReadAt(ClusterToOffset(first), _allocationBitmap, 0, (int)len);
+                Log.Info("ExFatScanner", $"Allocation bitmap loaded ({len} bytes)");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("ExFatScanner", $"Allocation bitmap unavailable: {ex.Message}");
+        }
+    }
+
+    /// <summary>Cluster allocation state from the bitmap (bit N = cluster N+2), FAT as fallback.</summary>
+    private bool IsClusterAllocated(long cluster)
+    {
+        if (_allocationBitmap != null)
+        {
+            long bit = cluster - 2;
+            long byteIdx = bit / 8;
+            if (byteIdx < 0 || byteIdx >= _allocationBitmap.Length) return false;
+            return (_allocationBitmap[byteIdx] & (1 << (int)(bit % 8))) != 0;
+        }
+        return _fat != null && cluster < _fat.Length && _fat[cluster] != 0;
+    }
+
     private void WalkDirectory(long startCluster, string path, bool chainValid, long maxClusters,
         bool treatAllAsDeleted, List<RecoverableFile> results, HashSet<long> visited,
         IProgress<ScanProgress>? progress, System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
@@ -184,7 +228,7 @@ public sealed class ExFatScanner
         if (isDir)
         {
             // Recurse into live directories, and into deleted/unreachable ones whose clusters are still free.
-            bool clusterFree = _fat == null || firstCluster >= _fat.Length || _fat[firstCluster] == 0;
+            bool clusterFree = !IsClusterAllocated(firstCluster);
             if (!deleted || clusterFree)
             {
                 long dirClusters = dataLength > 0 ? (dataLength + BytesPerCluster - 1) / BytesPerCluster : 1;
@@ -228,13 +272,13 @@ public sealed class ExFatScanner
 
     private double MeasureReusedFraction(long startCluster, long size)
     {
-        if (_fat == null) return -1;
+        if (_allocationBitmap == null && _fat == null) return -1;
         long clusters = (size + BytesPerCluster - 1) / BytesPerCluster;
         long total = 0, reused = 0;
-        for (long c = startCluster; c < startCluster + clusters && c < _fat.Length; c++)
+        for (long c = startCluster; c < startCluster + clusters && c < ClusterCount + 2; c++)
         {
             total++;
-            if (_fat[c] != 0) reused++;
+            if (IsClusterAllocated(c)) reused++;
         }
         return total == 0 ? -1 : (double)reused / total;
     }

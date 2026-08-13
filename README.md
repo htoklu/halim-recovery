@@ -55,13 +55,16 @@ not just guessed.
 
 **Requirements:** Windows 10/11 x64. Administrator rights (raw disk access needs it).
 
-1. Download the latest release (`HalimRecovery.exe`) from the Releases page, or build from source:
+1. Download the latest release from the Releases page — either the installer
+   (`HalimRecovery-x.y.z-setup.exe`, includes Start Menu shortcut and uninstaller)
+   or the portable `HalimRecovery.exe` — or build from source:
 
 ```powershell
-git clone <repository-url>
+git clone https://github.com/htoklu/halim-recovery.git
 cd kurtarmak
-dotnet publish src/HalimRecovery.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
-# Output: src/HalimRecovery.App/bin/Release/net9.0-windows/win-x64/publish/HalimRecovery.exe
+dotnet publish src/HalimRecovery.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish/app
+# Portable EXE: publish/app/HalimRecovery.exe
+# Installer (requires Inno Setup 6): ISCC.exe installer\HalimRecovery.iss
 ```
 
 2. Run `HalimRecovery.exe` (UAC prompt is expected — raw volume access requires it).
@@ -126,7 +129,7 @@ hash-for-hash. Results are classified **EXACT / PARTIAL / FAILED** and published
 - [x] Benchmark test laboratory
 - [ ] Disk image (create & scan sector images)
 - [x] Natural language search (offline, rule-based)
-- [ ] Installer (Inno Setup)
+- [x] Installer (Inno Setup)
 - [ ] Fragmented file reconstruction (candidate extent scoring)
 - [ ] Stable 1.0.0 release
 

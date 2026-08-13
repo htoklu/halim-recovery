@@ -31,6 +31,9 @@ appsettings.local.json
 logs/
 *.log
 
+# Installer output
+installer/output/
+
 # Packages
 packages/
 *.nupkg

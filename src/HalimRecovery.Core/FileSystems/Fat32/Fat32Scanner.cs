@@ -130,7 +130,13 @@ public sealed class Fat32Scanner
 
                 if (!deleted && isDir)
                 {
-                    WalkDirectory(entryCluster, path + "\\" + name, results, visited, progress, started, ct, depth + 1);
+                    // Invariant: a genuinely live directory always has its first cluster
+                    // allocated in the FAT. A "live-looking" entry whose cluster is free is
+                    // an orphaned directory (deleted tree whose entry update never hit disk).
+                    if (entryCluster >= 2 && entryCluster < TotalClusters + 2 && IsClusterFree(entryCluster))
+                        WalkDeletedDirectory(entryCluster, path + "\\" + name, results, visited, progress, started, ct, depth + 1);
+                    else
+                        WalkDirectory(entryCluster, path + "\\" + name, results, visited, progress, started, ct, depth + 1);
                 }
                 else if (deleted && !isDir)
                 {
@@ -176,24 +182,43 @@ public sealed class Fat32Scanner
         }
     }
 
-    /// <summary>Reads one (free) cluster of a deleted directory and harvests its deleted entries.</summary>
-    private void WalkDeletedDirectory(long cluster, string path, List<RecoverableFile> results,
+    /// <summary>
+    /// Harvests every entry of an orphaned (deleted/unreachable) directory. All children are
+    /// recoverable regardless of their own deleted flag, because Windows does not rewrite
+    /// child entries when it deletes a whole tree. Walks contiguous clusters until the
+    /// directory terminator (the chain was cleared in the FAT).
+    /// </summary>
+    private void WalkDeletedDirectory(long startCluster, string path, List<RecoverableFile> results,
         HashSet<long> visited, IProgress<ScanProgress>? progress,
         System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
     {
-        if (depth > 64 || !visited.Add(cluster)) return;
-        var data = new byte[BytesPerCluster];
-        if (_reader.ReadAt(ClusterToOffset(cluster), data, 0, data.Length) < data.Length) return;
-        // Must look like a directory: "." entry first.
-        if (data[0] != '.' && data[0] != 0xE5) return;
+        if (depth > 64) return;
+        for (long cluster = startCluster; cluster < startCluster + 256 && cluster < TotalClusters + 2; cluster++)
+        {
+            if (!visited.Add(cluster)) return;
+            var data = new byte[BytesPerCluster];
+            if (_reader.ReadAt(ClusterToOffset(cluster), data, 0, data.Length) < data.Length) return;
+            // First cluster must look like a directory ("." entry or a deleted entry first).
+            if (cluster == startCluster && data[0] != '.' && data[0] != 0xE5) return;
+            if (cluster != startCluster && !IsClusterFree(cluster)) return; // reused by live data
 
+            bool terminated = HarvestDirectoryCluster(data, path, results, visited, progress, started, ct, depth);
+            if (terminated) return;
+        }
+    }
+
+    /// <summary>Processes one directory cluster; returns true when the 0x00 terminator was seen.</summary>
+    private bool HarvestDirectoryCluster(byte[] data, string path, List<RecoverableFile> results,
+        HashSet<long> visited, IProgress<ScanProgress>? progress,
+        System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
+    {
         var lfnParts = new List<(int, string)>();
         for (int off = 0; off + 32 <= data.Length; off += 32)
         {
             ct.ThrowIfCancellationRequested();
             var e = data.AsSpan(off, 32);
             byte first = e[0];
-            if (first == 0x00) break;
+            if (first == 0x00) return true;
             byte attr = e[11];
             if (attr == 0x0F) { lfnParts.Add((first == 0xE5 ? -1 : first & 0x1F, ReadLfnChars(e))); continue; }
 
@@ -230,6 +255,7 @@ public sealed class Fat32Scanner
             file.OverwrittenFraction = MeasureReusedFraction(entryCluster, size);
             results.Add(file);
         }
+        return false; // no terminator in this cluster: directory continues
     }
 
     private double MeasureReusedFraction(long startCluster, long size)

@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:HalimRecovery.App.ViewModels"
         Title="Halim Recovery — Free &amp; Open Source Windows Data Recovery"
         Width="1180" Height="760" MinWidth="960" MinHeight="600"
+        Icon="Assets/app.ico"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>

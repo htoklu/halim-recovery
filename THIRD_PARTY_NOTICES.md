@@ -23,3 +23,9 @@ scratch for this project using publicly available format documentation:
   MP3 (ISO/IEC 11172-3), RIFF/WAVE specification
 
 No source code from GPL-licensed tools (e.g. TestDisk/PhotoRec) is used in this project.
+
+## Artwork
+
+The application icon (`assets/icon.png`, `src/HalimRecovery.App/Assets/app.ico`)
+is original artwork created specifically for this project. It contains no
+third-party or trademarked material and is licensed under the project's MIT License.

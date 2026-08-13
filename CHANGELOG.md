@@ -23,6 +23,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versioning follo
 - WPF UI (dark theme) with progress/ETA/speed, pause/resume, cancel
 - CLI for scripting and test automation
 - VHD-based test laboratory with hash-verified EXACT/PARTIAL/FAILED classification
+- Benchmark: Quick Scan 42/42 exact-hash recoveries across NTFS/FAT32/exFAT
+  (see docs/BENCHMARK.md)
+- exFAT: allocation bitmap is used as the authoritative cluster-allocation source
+  (FAT entries of deleted files are often left stale by Windows)
+- Inno Setup installer (Start Menu shortcut, optional desktop shortcut, uninstall)
+- Original application icon (created for this project, MIT-licensed with the
+  project, no third-party artwork)
 - Logging to %LOCALAPPDATA%\HalimRecovery\logs (no personal content logged)
 
 ### Known limitations

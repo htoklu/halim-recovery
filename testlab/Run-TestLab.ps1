@@ -95,13 +95,11 @@ assign
     Write-VolumeCache -DriveLetter $letter
     Start-Sleep -Seconds 2
 
-    # 5: detach + attach for a completely fresh, cache-free view of the volume
-    Invoke-DiskPart "select vdisk file=`"$vhd`"`ndetach vdisk" | Out-Null
-    Start-Sleep -Seconds 1
-    Invoke-DiskPart "select vdisk file=`"$vhd`"`nattach vdisk" | Out-Null
-    Start-Sleep -Seconds 2
-    $letter = Get-TestVolumeLetter
-    Write-Host "Re-attached as $letter`:"
+    # NOTE: do NOT detach/re-attach here. Every mount makes Windows write to the
+    # volume (System Volume Information, indexer files), and on FAT32/exFAT those
+    # writes reuse the freshly freed directory clusters, destroying the deleted
+    # entries before recovery even starts. Real users scan the volume as-is after
+    # deletion, so the lab does the same.
 
     # 6: quick-scan recovery
     $dest = Join-Path $resultsDir "recovered_${fs}_quick"
