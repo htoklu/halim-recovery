@@ -1,0 +1,40 @@
+# Build outputs
+bin/
+obj/
+publish/
+dist/
+build/
+TestResults/
+*.binlog
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Test lab artifacts (large binaries, never commit)
+testlab/vhd/
+testlab/results/
+*.vhd
+*.vhdx
+*.img
+*.dd
+
+# Secrets & user data
+.env
+secrets.json
+*.secret
+appsettings.local.json
+
+# Logs
+logs/
+*.log
+
+# Packages
+packages/
+*.nupkg
+
+# OS
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,40 @@
+# HALIM RECOVERY — Kalıcı Geliştirme Kuralları
+
+## Token Tasarrufu
+- Gereksiz repository taraması yapma; minimum gerekli dosyayla çalış.
+- Görevle ilgisiz dosyaları açma.
+- bin, obj, .git, node_modules, venv, __pycache__, build, dist, cache, models, checkpoints, publish, TestResults klasörlerini okuma/tarama.
+- Büyük binary dosyaları (vhd, img, exe, dll, pdb) açma.
+- Aynı dosyayı aynı görev sırasında tekrar okuma.
+- Daha önce öğrenilmiş bilgiyi tekrar araştırma.
+- Gereksiz uzun açıklama yazma; görev sonunda kısa rapor ver.
+- Hata olduğunda tüm projeyi yeniden tarama; önce hatayla ilgili dosyaları ve doğrudan bağımlılıklarını incele.
+
+## Kod Kalitesi
+- Küçük değişiklik için büyük refactor yapma.
+- Çalışan kodu gereksiz yere değiştirme.
+- Kod yazmadan önce mevcut mimariyi anla (docs/ARCHITECTURE.md).
+- Yeni dependency eklemeden önce mevcut dependency'lerle çözüm ara.
+- Yeni dependency gerekiyorsa lisansını kontrol et ve THIRD_PARTY_NOTICES.md'ye ekle.
+
+## Recovery Doğruluğu
+- Recovery algoritmalarında varsayım yapma; emin olmadığın noktaları test et.
+- Test edilmemiş özelliği tamamlandı olarak işaretleme.
+- Teknik olarak kanıtlanamayan recovery başarısı iddiaları oluşturma.
+- "%100 recovery" veya "her dosyayı kurtarır" gibi iddialar kullanma.
+- Gerçek teknik veri olmadan sahte confidence yüzdesi üretme.
+
+## Güvenlik ve Emniyet
+- Kaynak diske gereksiz yazma yapma; recovery sırasında kaynak disk salt okunur kabul edilir.
+- UI thread'i uzun recovery işlemleriyle bloklama; her uzun işlem async + CancellationToken kullanır.
+- RTX/GPU'yu zorunlu yapma; motor CPU + disk I/O ağırlıklıdır.
+- API key, şifre, token veya kişisel gizli bilgileri repoya yazma.
+- .env, secrets, kullanıcı verileri .gitignore içinde kalır.
+- Loglara kişisel dosya içeriği, şifre, secret yazma.
+- Kullanıcı path'lerini doğrula; path traversal engelle.
+
+## Mimari
+- Recovery engine (HalimRecovery.Core) UI'dan bağımsızdır; UI referansı almaz.
+- Katmanlar: Disk Discovery → Filesystem Detection → Quick Scan / Deep Scan → Carving → Health → Preview → Recovery → Report.
+- Modüller arası gereksiz bağımlılık oluşturma.
+- Büyük diskte streaming/buffered I/O kullan; diski RAM'e alma; bounded memory.
