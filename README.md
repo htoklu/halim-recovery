@@ -7,6 +7,8 @@ free, open source, no paywalls, no subscriptions.
 
 > Made with ❤️ by **Halim Toklu**
 
+**[⬇ Download for Windows](https://github.com/htoklu/halim-recovery/releases/tag/v0.5.1)** — installer or portable EXE (Windows 10/11 x64)
+
 ---
 
 ## What is Halim Recovery?
@@ -55,9 +57,9 @@ not just guessed.
 
 **Requirements:** Windows 10/11 x64. Administrator rights (raw disk access needs it).
 
-1. Download the latest release from the Releases page — either the installer
-   (`HalimRecovery-x.y.z-setup.exe`, includes Start Menu shortcut and uninstaller)
-   or the portable `HalimRecovery.exe` — or build from source:
+1. **[Download the latest release](https://github.com/htoklu/halim-recovery/releases/tag/v0.5.1)** —
+   either the installer (`HalimRecovery-0.5.1-setup.exe`, includes Start Menu shortcut
+   and uninstaller) or the portable `HalimRecovery.exe` — or build from source:
 
 ```powershell
 git clone https://github.com/htoklu/halim-recovery.git
@@ -155,3 +157,25 @@ inherently uncertain: success depends on the state of your drive, and no result 
 guaranteed. For critically important data (legal, medical, business-critical), consider
 consulting a professional data recovery service before running any software. The authors
 are not liable for any data loss. See [LICENSE](LICENSE).
+
+---
+
+## Download
+
+If you just want to install and use the app, you do **not** need to clone this repository.
+
+**[⬇ Download Halim Recovery for Windows](https://github.com/htoklu/halim-recovery/releases/tag/v0.5.1)**
+
+On that page pick one of:
+
+| File | Recommended for |
+|---|---|
+| `HalimRecovery-0.5.1-setup.exe` | Most users — installer with Start Menu shortcut and uninstaller |
+| `HalimRecovery.exe` | Portable — single file, no installation |
+| `HalimRecovery-0.5.1-portable.zip` | Portable GUI + CLI + license/docs |
+
+Windows 10/11 x64. Administrator rights are required (UAC prompt). If Windows SmartScreen
+warns about an unknown publisher, choose **More info → Run anyway**.
+
+Source code on this page is for developers who want to build or contribute. End users
+should download from the [Releases](https://github.com/htoklu/halim-recovery/releases/tag/v0.5.1) page.
