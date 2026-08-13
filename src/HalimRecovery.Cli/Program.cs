@@ -6,7 +6,7 @@ using HalimRecovery.Core.Recovery;
 using HalimRecovery.Core.Reporting;
 using HalimRecovery.Core.Scanning;
 
-const string Version = "0.5.0";
+const string Version = "0.5.1";
 
 if (args.Length == 0)
 {

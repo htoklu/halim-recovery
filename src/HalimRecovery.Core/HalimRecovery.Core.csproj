@@ -4,7 +4,7 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Authors>Halim Toklu</Authors>
     <Product>Halim Recovery</Product>
   </PropertyGroup>

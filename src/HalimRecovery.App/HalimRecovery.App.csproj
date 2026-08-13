@@ -7,12 +7,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AssemblyName>HalimRecovery</AssemblyName>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Authors>Halim Toklu</Authors>
     <Product>Halim Recovery</Product>
     <Description>Free and open source Windows data recovery</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- WPF native DLLs must be extracted from the single-file bundle or the EXE
+         exits silently when downloaded alone from GitHub Releases. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>

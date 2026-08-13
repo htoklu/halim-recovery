@@ -3,7 +3,7 @@
 ; Prereq: dotnet publish output must exist in publish\app (see README).
 
 #define MyAppName "Halim Recovery"
-#define MyAppVersion "0.5.0"
+#define MyAppVersion "0.5.1"
 #define MyAppPublisher "Halim Toklu"
 #define MyAppURL "https://github.com/htoklu/halim-recovery"
 #define MyAppExeName "HalimRecovery.exe"

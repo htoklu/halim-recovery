@@ -21,5 +21,5 @@ public partial class App : Application
             Log.Error("App", "Fatal exception", args.ExceptionObject as Exception);
     }
 
-    public static string AppVersion => "0.5.0";
+    public static string AppVersion => "0.5.1";
 }

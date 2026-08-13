@@ -3,6 +3,13 @@
 All notable changes to Halim Recovery are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versioning follows [SemVer](https://semver.org/).
 
+## [0.5.1] — 2026-08-13
+
+### Fixed
+- Portable `HalimRecovery.exe` from GitHub Releases now includes WPF native libraries
+  inside the single-file bundle. v0.5.0's standalone EXE exited silently when
+  downloaded without the companion DLLs (`wpfgfx_cor3.dll` and others).
+
 ## [0.5.0] — 2026-08-13 (MVP)
 
 ### Added
