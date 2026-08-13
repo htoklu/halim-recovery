@@ -1,0 +1,54 @@
+<Window x:Class="HalimRecovery.App.Views.SupportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Support Halim Recovery" Width="440" SizeToContent="Height"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <StackPanel Margin="22">
+        <TextBlock Text="Support Halim Recovery" FontSize="19" FontWeight="Bold"/>
+        <TextBlock Text="If you find Halim Recovery useful, consider supporting development."
+                   Style="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,6,0,16"/>
+
+        <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Open" Width="70" Click="OpenKofi"/>
+                <StackPanel>
+                    <TextBlock Text="☕ Ko-fi" FontWeight="SemiBold"/>
+                    <TextBlock Text="ko-fi.com/htoklu" Style="{StaticResource Dim}" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Copy" Width="70" Click="CopyIban"/>
+                <StackPanel>
+                    <TextBlock Text="💳 IBAN" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="IbanText" Text="TR910006701000000057870794" Style="{StaticResource Dim}" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Copy" Width="70" Click="CopyUsdt"/>
+                <StackPanel>
+                    <TextBlock Text="₿ USDT (TRC20)" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="UsdtText" Text="TPRPEBtS8YbTnETdzFSNQezTNeqKfHtsLY" Style="{StaticResource Dim}" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="12">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Copy" Width="70" Click="CopyEmail"/>
+                <StackPanel>
+                    <TextBlock Text="📧 Email" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="EmailText" Text="htoklu1453@gmail.com" Style="{StaticResource Dim}" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <TextBlock x:Name="CopiedNote" Text="" Foreground="{StaticResource Green}" FontSize="12" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+        <Button Content="Close" Width="90" Margin="0,14,0,0" HorizontalAlignment="Center" Click="CloseClick"/>
+    </StackPanel>
+</Window>

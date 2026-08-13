@@ -36,6 +36,7 @@ try
         case "quick-scan": return await Scan(args, deep: false);
         case "deep-scan": return await Scan(args, deep: true);
         case "recover": return await Recover(args);
+        case "gen-testfiles": return GenTestFiles(args);
         default:
             Console.Error.WriteLine($"Unknown command: {args[0]}");
             return 2;
@@ -139,6 +140,17 @@ static async Task<int> Recover(string[] args)
     int failed = items.Count(i => i.Status == RecoveryStatus.Failed);
     Console.WriteLine($"DONE: {ok} recovered, {partial} partial, {failed} failed. Report: {report}");
     return failed == items.Count && items.Count > 0 ? 5 : 0;
+}
+
+static int GenTestFiles(string[] args)
+{
+    if (args.Length < 2) { Console.Error.WriteLine("Usage: gen-testfiles <directory> [--manifest <out.json>]"); return 2; }
+    var manifest = HalimRecovery.Core.TestSupport.SampleFiles.GenerateSet(args[1]);
+    string? manifestOut = ArgValue(args, "--manifest");
+    if (manifestOut != null)
+        File.WriteAllText(manifestOut, JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine($"Generated {manifest.Count} test files in {args[1]}");
+    return 0;
 }
 
 static string? ArgValue(string[] args, string name)

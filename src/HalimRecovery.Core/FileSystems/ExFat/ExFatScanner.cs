@@ -62,10 +62,16 @@ public sealed class ExFatScanner
         LoadFat();
         var results = new List<RecoverableFile>();
         var visited = new HashSet<long>();
-        WalkDirectory(RootDirCluster, "", chainValid: true, results, visited, progress, started, ct, 0);
+        WalkDirectory(RootDirCluster, "", chainValid: true, maxClusters: long.MaxValue,
+            treatAllAsDeleted: false, results, visited, progress, started, ct, 0);
         Log.Info("ExFatScanner", $"Found {results.Count} deleted entries in {started.Elapsed.TotalSeconds:F1}s");
         return results;
     }
+
+    /// <summary>Known exFAT directory entry type codes (in-use and deleted variants) plus end-of-directory.</summary>
+    private static bool LooksLikeDirectoryCluster(byte firstType) => firstType is
+        0x00 or 0x81 or 0x82 or 0x83 or 0x85 or 0xA0 or 0xA1 or 0xA2 or 0xC0 or 0xC1 or
+        0x01 or 0x02 or 0x03 or 0x05 or 0x20 or 0x21 or 0x22 or 0x40 or 0x41 or 0x60 or 0x61;
 
     private void LoadFat()
     {
@@ -85,12 +91,18 @@ public sealed class ExFatScanner
         }
     }
 
-    private void WalkDirectory(long startCluster, string path, bool chainValid,
-        List<RecoverableFile> results, HashSet<long> visited, IProgress<ScanProgress>? progress,
-        System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
+    /// <param name="treatAllAsDeleted">
+    /// True when walking a directory that is itself deleted/unreachable: every file inside
+    /// is unreachable from the live tree, so all entries are recoverable — Windows does not
+    /// rewrite child entries as "deleted" when it deletes a whole directory tree.
+    /// </param>
+    private void WalkDirectory(long startCluster, string path, bool chainValid, long maxClusters,
+        bool treatAllAsDeleted, List<RecoverableFile> results, HashSet<long> visited,
+        IProgress<ScanProgress>? progress, System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
     {
         if (depth > 64) return;
         long cluster = startCluster;
+        long clustersWalked = 0;
         int guard = 0;
 
         // Pending file entry set state (spans multiple 32-byte entries).
@@ -101,13 +113,14 @@ public sealed class ExFatScanner
         var nameBuilder = new StringBuilder();
         bool pendingIsDir = false;
 
-        while (cluster >= 2 && guard++ < 1_000_000)
+        while (cluster >= 2 && clustersWalked++ < maxClusters && guard++ < 1_000_000)
         {
             ct.ThrowIfCancellationRequested();
             if (!visited.Add(cluster)) break;
 
             var data = new byte[BytesPerCluster];
             if (_reader.ReadAt(ClusterToOffset(cluster), data, 0, data.Length) < data.Length) break;
+            if (!LooksLikeDirectoryCluster(data[0])) break; // strayed into non-directory data
 
             for (int off = 0; off + 32 <= data.Length; off += 32)
             {
@@ -139,8 +152,9 @@ public sealed class ExFatScanner
                         if (nameBuilder.Length >= nameLength && haveStream && nameLength > 0)
                         {
                             string name = nameBuilder.ToString()[..Math.Min(nameLength, nameBuilder.Length)].TrimEnd('\0');
-                            EmitEntry(name, path, pendingDeleted, pendingIsDir, noFatChain, firstCluster,
-                                dataLength, createdUtc, modifiedUtc, results, visited, progress, started, ct, depth);
+                            EmitEntry(name, path, pendingDeleted || treatAllAsDeleted, pendingIsDir, noFatChain,
+                                firstCluster, dataLength, createdUtc, modifiedUtc, treatAllAsDeleted,
+                                results, visited, progress, started, ct, depth);
                             nameLength = 0; haveStream = false;
                         }
                         break;
@@ -161,7 +175,7 @@ public sealed class ExFatScanner
     }
 
     private void EmitEntry(string name, string path, bool deleted, bool isDir, bool noFatChain,
-        long firstCluster, long dataLength, DateTime? createdUtc, DateTime? modifiedUtc,
+        long firstCluster, long dataLength, DateTime? createdUtc, DateTime? modifiedUtc, bool parentDeleted,
         List<RecoverableFile> results, HashSet<long> visited, IProgress<ScanProgress>? progress,
         System.Diagnostics.Stopwatch started, CancellationToken ct, int depth)
     {
@@ -169,11 +183,18 @@ public sealed class ExFatScanner
 
         if (isDir)
         {
-            // Recurse into live directories, and into deleted ones whose clusters are still free.
+            // Recurse into live directories, and into deleted/unreachable ones whose clusters are still free.
             bool clusterFree = _fat == null || firstCluster >= _fat.Length || _fat[firstCluster] == 0;
             if (!deleted || clusterFree)
-                WalkDirectory(firstCluster, path + "\\" + name, chainValid: !deleted && !noFatChain,
+            {
+                long dirClusters = dataLength > 0 ? (dataLength + BytesPerCluster - 1) / BytesPerCluster : 1;
+                bool live = !deleted && !parentDeleted;
+                WalkDirectory(firstCluster, path + "\\" + name,
+                    chainValid: live && !noFatChain,
+                    maxClusters: live && !noFatChain ? long.MaxValue : dirClusters,
+                    treatAllAsDeleted: deleted || parentDeleted,
                     results, visited, progress, started, ct, depth + 1);
+            }
             return;
         }
         if (!deleted || dataLength <= 0) return;

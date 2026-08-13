@@ -57,7 +57,12 @@ public sealed class RawDiskReader : IDisposable
         }
         if (DeviceIoControl(_handle, IOCTL_DISK_GET_LENGTH_INFO, IntPtr.Zero, 0, out long len, 8, out _, IntPtr.Zero))
             Length = len;
+        else if (GetFileSizeEx(_handle, out long fileLen))
+            Length = fileLen; // regular file (disk image) instead of a device
     }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetFileSizeEx(SafeFileHandle hFile, out long lpFileSize);
 
     /// <summary>
     /// Reads <paramref name="count"/> bytes at absolute byte <paramref name="offset"/>.

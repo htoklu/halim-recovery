@@ -21,12 +21,21 @@ public sealed class ScanEngine : IDisposable
     public FileSystemKind FileSystem { get; }
     public PauseToken Pause { get; } = new();
 
-    public ScanEngine(string driveLetter)
+    /// <param name="driveLetterOrImage">A drive letter ("E") or a path to a raw volume image file.</param>
+    public ScanEngine(string driveLetterOrImage)
     {
-        DriveLetter = driveLetter.TrimEnd(':', '\\');
-        _reader = new RawDiskReader($@"\\.\{DriveLetter}:");
+        if (File.Exists(driveLetterOrImage))
+        {
+            DriveLetter = "";
+            _reader = new RawDiskReader(Path.GetFullPath(driveLetterOrImage));
+        }
+        else
+        {
+            DriveLetter = driveLetterOrImage.TrimEnd(':', '\\');
+            _reader = new RawDiskReader($@"\\.\{DriveLetter}:");
+        }
         FileSystem = FileSystemDetector.Detect(_reader);
-        Log.Info("ScanEngine", $"Opened {DriveLetter}: filesystem={FileSystem}, size={_reader.Length / (1 << 20)} MiB");
+        Log.Info("ScanEngine", $"Opened {driveLetterOrImage}: filesystem={FileSystem}, size={_reader.Length / (1 << 20)} MiB");
     }
 
     public RawDiskReader Reader => _reader;
